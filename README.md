@@ -33,7 +33,7 @@ sudo pacman -S --needed base-devel mpv qt6-base xorg-xwayland libxcb xcb-util-cu
 ### Debian and Ubuntu
 
 ```sh
-sudo apt install build-essential pkg-config binutils libmpv-dev qt6-base-dev xwayland
+sudo apt install build-essential pkg-config binutils libmpv-dev qt6-base-dev libxcb1-dev xwayland
 ```
 
 ## Installation
