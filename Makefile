@@ -19,7 +19,7 @@ MPV_SCRIPTS_DIR ?= $(MPV_CONFIG_DIR)/scripts
 CXXFLAGS := -std=c++17 -O2 -fPIC
 QT_CORE_CFLAGS := $(shell $(PKG_CONFIG) --cflags Qt6Core mpv)
 QT_CORE_LIBS := $(shell $(PKG_CONFIG) --libs Qt6Core)
-QT_WIDGETS_FLAGS := $(shell $(PKG_CONFIG) --cflags --libs Qt6Widgets)
+QT_WIDGETS_FLAGS := $(shell $(PKG_CONFIG) --cflags --libs Qt6Widgets xcb)
 
 .PHONY: all install clean
 

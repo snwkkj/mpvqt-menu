@@ -9,11 +9,17 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(MPV REQUIRED mpv>=0.37.0)
+pkg_check_modules(XCB REQUIRED IMPORTED_TARGET xcb)
 find_package(Qt6 6.2 REQUIRED COMPONENTS Core Gui Widgets)
 find_package(Threads REQUIRED)
 
 add_executable(menu-helper src/helper_main.cpp)
-target_link_libraries(menu-helper PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+target_link_libraries(menu-helper PRIVATE
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Widgets
+    PkgConfig::XCB
+)
 
 set(HELPER_BLOB "${CMAKE_CURRENT_BINARY_DIR}/helper_blob.o")
 add_custom_command(
