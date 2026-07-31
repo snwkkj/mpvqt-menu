@@ -1,0 +1,27 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - image: ubuntu-24.04
+            packages: libmpv-dev qt6-base-dev
+    runs-on: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake ninja-build pkg-config ${{ matrix.packages }}
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build package
+        run: cmake --build build --target package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpvqt-menu-${{ matrix.image }}
+          path: build/mpvqt-menu.tar.gz
