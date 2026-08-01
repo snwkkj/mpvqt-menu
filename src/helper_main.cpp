@@ -9,6 +9,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMenu>
+#include <QProxyStyle>
+#include <QStyleOptionMenuItem>
 #include <QTimer>
 #include <QWidget>
 
@@ -17,6 +19,41 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+
+class MenuSpacingStyle : public QProxyStyle {
+public:
+    void drawControl(ControlElement element, const QStyleOption *option,
+                     QPainter *painter,
+                     const QWidget *widget = nullptr) const override
+    {
+        const auto *menuItem =
+            qstyleoption_cast<const QStyleOptionMenuItem *>(option);
+        if (element != CE_MenuItem || !menuItem) {
+            QProxyStyle::drawControl(element, option, painter, widget);
+            return;
+        }
+
+        const qsizetype separator = menuItem->text.indexOf('\t');
+        if (separator < 0) {
+            QProxyStyle::drawControl(element, option, painter, widget);
+            return;
+        }
+
+        QStyleOptionMenuItem item = *menuItem;
+        const QString shortcut = item.text.mid(separator + 1);
+        item.text = item.text.left(separator);
+        QProxyStyle::drawControl(element, &item, painter, widget);
+
+        const bool enabled = item.state & State_Enabled;
+        const QPalette::ColorRole role = item.state & State_Selected
+                                             ? QPalette::HighlightedText
+                                             : QPalette::PlaceholderText;
+        const QRect shortcutRect = item.rect.adjusted(0, 0, -10, 0);
+        drawItemText(painter, shortcutRect,
+                     Qt::AlignRight | Qt::AlignVCenter | Qt::TextSingleLine,
+                     item.palette, enabled, shortcut, role);
+    }
+};
 
 class MenuDismissFilter : public QObject {
 public:
@@ -174,6 +211,7 @@ static void addItems(QMenu *menu, const QJsonArray &items)
         QAction *action;
         if (item["type"] == "submenu") {
             QMenu *child = menu->addMenu(title);
+            child->setStyle(menu->style());
             addItems(child, item["submenu"].toArray());
             action = child->menuAction();
             if (child->isEmpty()) action->setEnabled(false);
@@ -213,6 +251,9 @@ int main(int argc, char **argv)
         X11OutsideClickWatcher outsideClickWatcher(&app);
         app.installEventFilter(&dismissFilter);
         QMenu menu;
+        auto *menuStyle = new MenuSpacingStyle;
+        menuStyle->setParent(&menu);
+        menu.setStyle(menuStyle);
         if (x11Popup) {
             menu.setAttribute(Qt::WA_X11NetWmWindowTypePopupMenu);
             menu.setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
@@ -221,6 +262,7 @@ int main(int argc, char **argv)
                                 Qt::WindowStaysOnTopHint);
         }
         addItems(&menu, QJsonDocument::fromJson(input).array());
+        menu.setMinimumWidth(menu.sizeHint().width() + 40);
         QObject::connect(&menu, &QMenu::triggered, &app, [&](QAction *selected) {
             const QByteArray value = selected->data().toString().toUtf8();
             std::fwrite(value.constData(), 1, value.size(), stdout);
