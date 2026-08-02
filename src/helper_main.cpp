@@ -48,7 +48,13 @@ public:
         const QPalette::ColorRole role = item.state & State_Selected
                                              ? QPalette::HighlightedText
                                              : QPalette::PlaceholderText;
-        const QRect shortcutRect = item.rect.adjusted(0, 0, -10, 0);
+        int shortcutRightMargin = 10;
+        if (item.menuItemType == QStyleOptionMenuItem::SubMenu) {
+            shortcutRightMargin +=
+                pixelMetric(PM_MenuButtonIndicator, &item, widget);
+        }
+        const QRect shortcutRect =
+            item.rect.adjusted(0, 0, -shortcutRightMargin, 0);
         drawItemText(painter, shortcutRect,
                      Qt::AlignRight | Qt::AlignVCenter | Qt::TextSingleLine,
                      item.palette, enabled, shortcut, role);
